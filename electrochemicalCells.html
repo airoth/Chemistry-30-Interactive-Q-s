@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrochemistry: Electrochemical Cells</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for drop zones */
+        .drop-zone-items::-webkit-scrollbar {
+            width: 6px;
+        }
+        .drop-zone-items::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        /* Smooth transition for drag items */
+        .drag-item {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .drag-item:active {
+            transform: scale(0.95);
+        }
+        
+        /* Visual cue for drop zones when dragging over */
+        .drag-over {
+            background-color: rgba(59, 130, 246, 0.2);
+            border-style: solid !important;
+        }
+
+        /* Diagram Drop Zones */
+        .diagram-zone, .diagram-zone-4 {
+            transition: all 0.2s;
+        }
+        .diagram-zone.drag-over, .diagram-zone-4.drag-over {
+            background-color: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+        .diagram-item {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hide number input arrows */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-16">
+
+    <header class="bg-blue-900 text-white p-6 shadow-md mb-8">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-3xl font-bold">Electrochemistry Mastery</h1>
+            <p class="text-blue-200 mt-2">Interactive Cell Comparison & Analysis</p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 flex flex-col gap-12">
+
+        <!-- Student Identification -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <label for="studentName" class="block text-xl font-bold text-slate-800 mb-2">Student Name:</label>
+            <input type="text" id="studentName" class="w-full md:w-1/2 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enter your full name" required>
+        </section>
+
+        <!-- SECTION 1: Venn Diagram Drag and Drop -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Part 1: Voltaic vs. Electrolytic Cells</h2>
+                <p class="text-slate-600">Drag and drop the characteristic labels into the correct category. Place features shared by both in the center.</p>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="w-full md:w-1/3 bg-slate-100 rounded-xl p-4 border border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Label Bank</h3>
+                    <div id="pool" class="flex flex-col gap-2 min-h-[200px] drop-zone-items" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                </div>
+                <div class="w-full md:w-2/3 flex flex-col sm:flex-row items-stretch justify-center gap-2 relative min-h-[400px]">
+                    <div id="voltaic" class="drop-zone flex-1 bg-blue-50/80 border-2 border-blue-200 rounded-l-3xl p-4 relative flex flex-col" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <h3 class="text-center font-bold text-blue-800 mb-4">Voltaic Cells</h3>
+                        <div class="drop-zone-items flex flex-col gap-2 flex-grow overflow-y-auto"></div>
+                    </div>
+                    <div id="both" class="drop-zone flex-1 bg-purple-50/80 border-2 border-purple-200 p-4 relative flex flex-col" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <h3 class="text-center font-bold text-purple-800 mb-4">Both</h3>
+                        <div class="drop-zone-items flex flex-col gap-2 flex-grow overflow-y-auto"></div>
+                    </div>
+                    <div id="electrolytic" class="drop-zone flex-1 bg-green-50/80 border-2 border-green-200 rounded-r-3xl p-4 relative flex flex-col" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <h3 class="text-center font-bold text-green-800 mb-4">Electrolytic Cells</h3>
+                        <div class="drop-zone-items flex flex-col gap-2 flex-grow overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-start">
+                <button onclick="resetVenn()" class="px-5 py-2.5 rounded-lg text-slate-600 font-medium hover:bg-slate-200 transition-colors">Reset Venn Diagram</button>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Voltaic Cell Analysis -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Part 2: Voltaic Cell Analysis</h2>
+                <p class="text-slate-600">Consider a standard voltaic cell made with Zinc and Copper half-cells.</p>
+            </div>
+            <div class="flex flex-col gap-6 mb-8">
+                <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                    <label class="block font-bold text-slate-800 mb-2">Identify the Strongest Oxidizing Agent (SOA):</label>
+                    <select id="select-soa" class="w-full md:w-1/2 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="">-- Select --</option>
+                        <option value="cu2+">Cu²⁺(aq)</option>
+                        <option value="zn2+">Zn²⁺(aq)</option>
+                        <option value="cu">Cu(s)</option>
+                        <option value="zn">Zn(s)</option>
+                    </select>
+                </div>
+                <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                    <label class="block font-bold text-slate-800 mb-2">Identify the Strongest Reducing Agent (SRA):</label>
+                    <select id="select-sra" class="w-full md:w-1/2 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="">-- Select --</option>
+                        <option value="cu2+">Cu²⁺(aq)</option>
+                        <option value="zn2+">Zn²⁺(aq)</option>
+                        <option value="cu">Cu(s)</option>
+                        <option value="zn">Zn(s)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Voltaic Cell Diagram & Calculation -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Part 3: Voltaic Cell Diagram & Calculation</h2>
+                <p class="text-slate-600">Label the diagram below and calculate the cell potential.</p>
+            </div>
+            
+            <div class="bg-slate-100 rounded-xl p-4 border border-slate-200 mb-8 min-h-[80px]">
+                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Label Bank</h3>
+                <div id="diagram-pool" class="flex flex-wrap gap-2 drop-zone-items" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            </div>
+            
+            <div class="flex justify-center bg-slate-50 p-4 rounded-xl border border-slate-200 relative mb-8">
+                <div class="relative w-full max-w-xl mx-auto" style="aspect-ratio: 400 / 240; background-color: #f8fafc;">
+                    <!-- SVG diagram placeholders for Voltaic Cell -->
+                    <svg viewBox="0 0 400 240" class="w-full h-full absolute inset-0" style="font-family: sans-serif;">
+                         <!-- Beakers -->
+                         <path d="M 50 100 L 50 210 A 10 10 0 0 0 60 220 L 160 220 A 10 10 0 0 0 170 210 L 170 100" fill="none" stroke="#94a3b8" stroke-width="3"/>
+                         <path d="M 230 100 L 230 210 A 10 10 0 0 0 240 220 L 340 220 A 10 10 0 0 0 350 210 L 350 100" fill="none" stroke="#94a3b8" stroke-width="3"/>
+                         
+                         <!-- Solution Liquids -->
+                         <path d="M 52 140 L 168 140 L 168 210 A 8 8 0 0 1 160 218 L 60 218 A 8 8 0 0 1 52 210 Z" fill="#e0f2fe" opacity="0.6"/>
+                         <path d="M 232 140 L 348 140 L 348 210 A 8 8 0 0 1 340 218 L 240 218 A 8 8 0 0 1 232 210 Z" fill="#e0f2fe" opacity="0.6"/>
+
+                         <!-- Solution Labels -->
+                         <text x="130" y="205" text-anchor="middle" class="text-sm font-bold fill-blue-800 opacity-50">Zn²⁺(aq)</text>
+                         <text x="270" y="205" text-anchor="middle" class="text-sm font-bold fill-blue-800 opacity-50">Cu²⁺(aq)</text>
+
+                         <!-- Salt bridge -->
+                         <path d="M 150 150 L 150 70 A 10 10 0 0 1 160 60 L 240 60 A 10 10 0 0 1 250 70 L 250 150" fill="none" stroke="#cbd5e1" stroke-width="15"/>
+                         
+                         <!-- Electrodes -->
+                         <rect x="85" y="80" width="30" height="100" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                         <text x="100" y="130" text-anchor="middle" class="text-xs font-bold fill-slate-900">Zn(s)</text>
+
+                         <rect x="285" y="80" width="30" height="100" fill="#fcd34d" stroke="#b45309" stroke-width="2"/>
+                         <text x="300" y="130" text-anchor="middle" class="text-xs font-bold fill-orange-950">Cu(s)</text>
+
+                         <!-- Wires and Voltmeter -->
+                         <path d="M 100 80 L 100 30 L 180 30" fill="none" stroke="#334155" stroke-width="3"/>
+                         <path d="M 220 30 L 300 30 L 300 80" fill="none" stroke="#334155" stroke-width="3"/>
+                         <circle cx="200" cy="30" r="20" fill="#ffffff" stroke="#334155" stroke-width="3"/>
+                         <text x="200" y="35" text-anchor="middle" font-weight="bold">V</text>
+                    </svg>
+
+                    <!-- Drop zones with drag and drop handlers added -->
+                    <div id="dz_eflow" class="diagram-zone drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded p-0.5" style="left: 40%; top: 2%; width: 20%; height: 8%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                    <div id="dz_anode" class="diagram-zone drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded p-0.5" style="left: 17%; top: 20%; width: 16%; height: 8%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                    <div id="dz_cathode" class="diagram-zone drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded p-0.5" style="left: 67%; top: 20%; width: 16%; height: 8%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                    <div id="dz_anion" class="diagram-zone drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded p-0.5" style="left: 36%; top: 30%; width: 12%; height: 8%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                    <div id="dz_cation" class="diagram-zone drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded p-0.5" style="left: 52%; top: 30%; width: 12%; height: 8%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                    <div id="dz_arrow1" class="diagram-zone drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded p-0.5" style="left: 16%; top: 80%; width: 10%; height: 8%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                    <div id="dz_arrow2" class="diagram-zone drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded p-0.5" style="left: 74%; top: 80%; width: 10%; height: 8%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                </div>
+            </div>
+            
+            <div class="flex justify-start mb-8">
+                <button onclick="resetDiagram()" class="px-5 py-2.5 rounded-lg text-slate-600 font-medium hover:bg-slate-200 transition-colors">Reset Diagram Labels</button>
+            </div>
+
+            <!-- Calculation -->
+            <div class="mt-8 bg-blue-50 p-5 rounded-xl border border-blue-100">
+                <label class="block font-bold text-slate-800 mb-2">Calculate the standard cell potential (E°cell) for this cell:</label>
+                <div class="flex items-center gap-3">
+                    <select id="calc-sign" class="p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-bold text-lg cursor-pointer">
+                        <option value="">▼</option>
+                        <option value="+">+</option>
+                        <option value="-">-</option>
+                    </select>
+                    <input type="number" id="calc-value" min="0" step="0.01" class="w-32 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-bold text-lg" placeholder="Value">
+                    <span class="font-bold text-lg text-slate-700">V</span>
+                </div>
+                <p class="text-sm text-slate-500 mt-2">Refer to a standard reduction potential table to calculate your answer.</p>
+            </div>
+        </section>
+
+    <!-- SECTION 4: Electrolytic Cell & Chloride Anomaly -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">Part 4: Electrolytic Cell & The Chloride Anomaly</h2>
+            <p class="text-slate-600">Analyze the electrolysis of concentrated aqueous sodium chloride (brine). Note that standard reduction potentials do not always perfectly predict reality due to reaction overpotentials.</p>
+        </div>
+
+        <!-- Multistep Questions -->
+        <div class="flex flex-col gap-6 mb-8">
+            <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                <label class="block font-bold text-slate-800 mb-2">Step 1. Identify the Strongest Oxidizing Agent (SOA):</label>
+                <select id="select-soa-4" class="w-full md:w-1/2 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">-- Select --</option>
+                    <option value="na_aq">Na⁺(aq)</option>
+                    <option value="cl_aq">Cl⁻(aq)</option>
+                    <option value="h2o_l">H₂O(l)</option>
+                </select>
+            </div>
+            
+            <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                <label class="block font-bold text-slate-800 mb-2">Step 2. Identify the <span class="italic text-blue-700">predicted</span> Strongest Reducing Agent (SRA) based STRICTLY on standard tables:</label>
+                <select id="select-predicted-sra" class="w-full md:w-1/2 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">-- Select --</option>
+                    <option value="na_aq">Na⁺(aq)</option>
+                    <option value="cl_aq">Cl⁻(aq)</option>
+                    <option value="h2o_l">H₂O(l)</option>
+                </select>
+            </div>
+
+            <div class="bg-purple-50 p-5 rounded-xl border border-purple-200 shadow-sm">
+                <label class="block font-bold text-purple-900 mb-2">Step 3. Identify the <span class="italic text-purple-700">actual</span> species that oxidizes (due to the chloride anomaly):</label>
+                <select id="select-actual-sra" class="w-full md:w-1/2 p-3 rounded-lg border border-purple-300 focus:ring-2 focus:ring-purple-500 bg-white">
+                    <option value="">-- Select --</option>
+                    <option value="na_aq">Na⁺(aq)</option>
+                    <option value="cl_aq">Cl⁻(aq)</option>
+                    <option value="h2o_l">H₂O(l)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Diagram Labeling -->
+        <div class="bg-slate-100 rounded-xl p-4 border border-slate-200 mb-8 min-h-[80px]">
+            <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Label Bank (Part 4)</h3>
+            <div id="diagram-pool-4" class="flex flex-wrap gap-2 drop-zone-items" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <!-- Part 4 Diagram Labels injected by JS -->
+            </div>
+        </div>
+
+        <div class="flex justify-center bg-slate-50 p-4 rounded-xl border border-slate-200 relative">
+            <div class="relative w-full max-w-xl mx-auto" style="aspect-ratio: 400 / 240;">
+                <svg viewBox="0 0 400 240" class="w-full h-full absolute inset-0" style="font-family: sans-serif;">
+                    <!-- DC Power Source -->
+                    <g transform="translate(200, 30)">
+                        <!-- Battery symbol: Long left (+), Short right (-) -->
+                        <line x1="-15" y1="-15" x2="-15" y2="15" stroke="#334155" stroke-width="4"/> <!-- + -->
+                        <line x1="0" y1="-8" x2="0" y2="8" stroke="#334155" stroke-width="6"/> <!-- - -->
+                        <line x1="15" y1="-15" x2="15" y2="15" stroke="#334155" stroke-width="4"/> <!-- + -->
+                        <line x1="30" y1="-8" x2="30" y2="8" stroke="#334155" stroke-width="6"/> <!-- - -->
+                        <text x="-15" y="-20" text-anchor="middle" class="text-xs font-bold fill-slate-700">+</text>
+                        <text x="30" y="-20" text-anchor="middle" class="text-xs font-bold fill-slate-700">-</text>
+                        <line x1="-30" y1="0" x2="-15" y2="0" stroke="#334155" stroke-width="3"/>
+                        <line x1="30" y1="0" x2="45" y2="0" stroke="#334155" stroke-width="3"/>
+                    </g>
+                    <!-- Wires -->
+                    <path d="M 170 30 L 100 30 L 100 90" fill="none" stroke="#334155" stroke-width="3"/>
+                    <path d="M 245 30 L 300 30 L 300 90" fill="none" stroke="#334155" stroke-width="3"/>
+                    
+                    <!-- Single Beaker -->
+                    <path d="M 50 80 L 50 210 A 10 10 0 0 0 60 220 L 340 220 A 10 10 0 0 0 350 210 L 350 80" fill="none" stroke="#94a3b8" stroke-width="3"/>
+                    <path d="M 52 100 L 348 100 L 348 210 A 8 8 0 0 1 340 218 L 60 218 A 8 8 0 0 1 52 210 Z" fill="#e0f2fe" opacity="0.6"/>
+                    <text x="200" y="200" text-anchor="middle" class="text-lg font-bold fill-blue-800 opacity-50">NaCl(aq)</text>
+
+                    <!-- Left Electrode (Anode) -->
+                    <rect x="85" y="90" width="30" height="100" fill="#334155" stroke="#0f172a" stroke-width="2"/>
+                    <text x="100" y="145" text-anchor="middle" class="text-sm font-bold fill-white">C(s)</text>
+                    <!-- Bubbles Left (Cl2) -->
+                    <circle cx="75" cy="180" r="3" fill="#bef264"/><circle cx="80" cy="160" r="4" fill="#bef264"/><circle cx="76" cy="140" r="3" fill="#bef264"/><circle cx="120" cy="170" r="3.5" fill="#bef264"/><circle cx="118" cy="150" r="2.5" fill="#bef264"/>
+
+                    <!-- Right Electrode (Cathode) -->
+                    <rect x="285" y="90" width="30" height="100" fill="#334155" stroke="#0f172a" stroke-width="2"/>
+                    <text x="300" y="145" text-anchor="middle" class="text-sm font-bold fill-white">C(s)</text>
+                    <!-- Bubbles Right (H2) -->
+                    <circle cx="275" cy="175" r="3" fill="#fff"/><circle cx="280" cy="155" r="4" fill="#fff"/><circle cx="276" cy="135" r="3" fill="#fff"/><circle cx="320" cy="165" r="3.5" fill="#fff"/><circle cx="318" cy="145" r="2.5" fill="#fff"/>
+                    
+                    <!-- Ion flow arrows -->
+                    <path d="M 185 140 L 145 140" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="4"/>
+                    <polygon points="145,140 153,136 153,144" fill="#8b5cf6"/>
+                    <path d="M 215 180 L 255 180" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="4"/>
+                    <polygon points="255,180 247,176 247,184" fill="#8b5cf6"/>
+                </svg>
+
+                <!-- Drop Zones Part 4 -->
+                <!-- e- flow left -->
+                <div id="dz4_eflow_left" class="diagram-zone-4 drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded flex items-center justify-center p-0.5" style="left: 17%; top: 1%; width: 22%; height: 10%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <!-- e- flow right -->
+                <div id="dz4_eflow_right" class="diagram-zone-4 drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded flex items-center justify-center p-0.5" style="left: 63%; top: 1%; width: 22%; height: 10%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                
+                <!-- Anode Label (Left) -->
+                <div id="dz4_anode" class="diagram-zone-4 drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded flex items-center justify-center p-0.5" style="left: 17%; top: 25%; width: 16%; height: 10%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <!-- Cathode Label (Right) -->
+                <div id="dz4_cathode" class="diagram-zone-4 drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded flex items-center justify-center p-0.5" style="left: 67%; top: 25%; width: 16%; height: 10%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                
+                <!-- Gas Label (Left) -->
+                <div id="dz4_gas_left" class="diagram-zone-4 drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded flex items-center justify-center p-0.5" style="left: 3%; top: 60%; width: 14%; height: 10%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <!-- Gas Label (Right) -->
+                <div id="dz4_gas_right" class="diagram-zone-4 drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded flex items-center justify-center p-0.5" style="left: 83%; top: 60%; width: 14%; height: 10%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                
+                <!-- Anion/Cation Drop Zones -->
+                <div id="dz4_anion" class="diagram-zone-4 drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded flex items-center justify-center p-0.5" style="left: 34%; top: 50%; width: 22%; height: 10%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <div id="dz4_cation" class="diagram-zone-4 drop-zone absolute border-2 border-dashed border-slate-400 bg-white/70 rounded flex items-center justify-center p-0.5" style="left: 54%; top: 67%; width: 22%; height: 10%;" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+            </div>
+        </div>
+        
+        <div class="flex justify-start mt-4 mb-8">
+            <button onclick="initDiagram4()" class="px-5 py-2.5 rounded-lg text-slate-600 font-medium hover:bg-slate-200 transition-colors">Reset Part 4 Labels</button>
+        </div>
+
+        <!-- Calculation -->
+        <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+            <label class="block font-bold text-slate-800 mb-2">Step 4. Calculate the standard cell potential (E°cell) for the <span class="italic">actual</span> reaction:</label>
+            <div class="flex items-center gap-3">
+                <select id="calc4-sign" class="p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-bold text-lg cursor-pointer">
+                    <option value="">▼</option>
+                    <option value="+">+</option>
+                    <option value="-">-</option>
+                </select>
+                <input type="number" id="calc4-value" min="0" step="0.01" class="w-32 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-bold text-lg" placeholder="Value">
+                <span class="font-bold text-lg text-slate-700">V</span>
+            </div>
+            <p class="text-sm text-slate-500 mt-2">Use the standard reduction potential table for the actual species that are reacting.</p>
+        </div>
+    </section>
+
+    <!-- Submit Assignment -->
+    <section class="flex justify-end mt-4">
+        <button id="submitBtn" onclick="submitAssignment()" class="px-8 py-4 rounded-xl bg-green-600 text-white font-bold text-xl hover:bg-green-700 shadow-md transition-colors w-full sm:w-auto">
+            Submit Assignment
+        </button>
+    </section>
+
+</main>
+
+<!-- Custom Modal -->
+<div id="custom-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 transform transition-all">
+        <h3 id="modal-title" class="text-xl font-bold text-slate-800 mb-2">Notification</h3>
+        <p id="modal-message" class="text-slate-600 mb-6">Message goes here.</p>
+        <div class="flex justify-end">
+            <button onclick="closeModal()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- MODAL LOGIC ---
+    function showModal(title, message) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').textContent = message;
+        document.getElementById('custom-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('custom-modal').classList.add('hidden');
+    }
+
+    // --- DATA ---
+        const labels = [
+            { id: 'l1', text: 'Spontaneous reaction (E° > 0)', zone: 'voltaic' },
+            { id: 'l2', text: 'Non-spontaneous reaction (E° < 0)', zone: 'electrolytic' },
+            { id: 'l3', text: 'Chemical Energy → Electrical', zone: 'voltaic' },
+            { id: 'l4', text: 'Electrical Energy → Chemical', zone: 'electrolytic' },
+            { id: 'l5', text: 'Anode (-), Cathode (+)', zone: 'voltaic' },
+            { id: 'l6', text: 'Anode (+), Cathode (-)', zone: 'electrolytic' },
+            { id: 'l7', text: 'Oxidation at Anode', zone: 'both' },
+            { id: 'l8', text: 'Reduction at Cathode', zone: 'both' },
+            { id: 'l9', text: 'Electrons flow Anode → Cathode', zone: 'both' },
+            { id: 'l10', text: 'Requires an external power supply', zone: 'electrolytic' },
+            { id: 'l11', text: 'Acts as a battery', zone: 'voltaic' },
+            { id: 'l12', text: 'Example: Electroplating', zone: 'electrolytic' }
+        ];
+
+        const diagramLabelsData = [
+            { id: 'dl1', text: 'e⁻ flow →' },
+            { id: 'dl2', text: 'Anode' },
+            { id: 'dl3', text: 'Cathode' },
+            { id: 'dl4', text: 'Anions' },
+            { id: 'dl5', text: 'Cations' },
+            { id: 'dl8', text: '←' },
+            { id: 'dl9', text: '→' }
+    ];
+
+    const diagramLabelsData4 = [
+        { id: 'dl4_1', text: 'Anode' },
+        { id: 'dl4_2', text: 'Cathode' },
+        { id: 'dl4_3', text: 'Cl₂ (g)' },
+        { id: 'dl4_4', text: 'H₂ (g)' },
+        { id: 'dl4_5', text: 'Electron flow ←' },
+        { id: 'dl4_6', text: 'Electron flow →' },
+        { id: 'dl4_7', text: 'Anion direction' },
+        { id: 'dl4_8', text: 'Cation direction' }
+    ];
+
+    // --- INIT VENN DIAGRAM ---
+        const pool = document.getElementById('pool');
+        
+        function initVenn() {
+            pool.innerHTML = '';
+            document.querySelectorAll('.drop-zone .drop-zone-items').forEach(zone => zone.innerHTML = '');
+            
+            // Shuffle array
+            const shuffled = [...labels].sort(() => Math.random() - 0.5);
+            
+            shuffled.forEach(label => {
+                const el = document.createElement('div');
+                el.id = label.id;
+                el.className = 'drag-item bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm font-medium shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-400 select-none';
+                el.draggable = true;
+                el.textContent = label.text;
+                el.dataset.correctZone = label.zone;
+                el.dataset.type = 'venn'; // Distinguish between label types
+                
+                el.addEventListener('dragstart', dragStart);
+                el.addEventListener('dragend', dragEnd);
+                
+                pool.appendChild(el);
+            });
+        }
+
+        // --- INIT DIAGRAM LABELS ---
+        const diagramPool = document.getElementById('diagram-pool');
+
+        function initDiagram() {
+            diagramPool.innerHTML = '';
+            document.querySelectorAll('.diagram-zone').forEach(zone => {
+                zone.innerHTML = '';
+            });
+
+            const shuffledDiagram = [...diagramLabelsData].sort(() => Math.random() - 0.5);
+
+            shuffledDiagram.forEach(label => {
+                const el = document.createElement('div');
+                el.id = label.id;
+                el.className = 'drag-item diagram-item bg-white border border-slate-300 rounded shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-400 select-none font-bold text-slate-700';
+                el.draggable = true;
+                el.textContent = label.text;
+                el.dataset.type = 'diagram'; // Distinguish between label types
+                
+                el.addEventListener('dragstart', dragStart);
+                el.addEventListener('dragend', dragEnd);
+                
+                diagramPool.appendChild(el);
+        });
+    }
+
+    // --- INIT DIAGRAM 4 LABELS ---
+    function initDiagram4() {
+        const dPool4 = document.getElementById('diagram-pool-4');
+        dPool4.innerHTML = '';
+        document.querySelectorAll('.diagram-zone-4').forEach(zone => {
+            zone.innerHTML = '';
+        });
+
+        const shuffled = [...diagramLabelsData4].sort(() => Math.random() - 0.5);
+
+        shuffled.forEach(label => {
+            const el = document.createElement('div');
+            el.id = label.id;
+            el.className = 'drag-item diagram-item bg-white border border-slate-300 rounded shadow-sm cursor-grab active:cursor-grabbing hover:border-purple-400 select-none font-bold text-slate-700';
+            el.draggable = true;
+            el.textContent = label.text;
+            el.dataset.type = 'diagram4'; 
+            
+            el.addEventListener('dragstart', dragStart);
+            el.addEventListener('dragend', dragEnd);
+            
+            dPool4.appendChild(el);
+        });
+    }
+
+    // --- DRAG AND DROP LOGIC ---
+        function dragStart(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            setTimeout(() => {
+                ev.target.classList.add("opacity-50");
+            }, 0);
+        }
+
+        function dragEnd(ev) {
+            ev.target.classList.remove("opacity-50");
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            // Find the closest drop-zone parent
+            const zone = ev.target.closest('.drop-zone') || ev.target.closest('#pool') || ev.target.closest('#diagram-pool') || ev.target.closest('#diagram-pool-4');
+            if(zone && zone.id !== 'pool' && zone.id !== 'diagram-pool' && zone.id !== 'diagram-pool-4') {
+                zone.classList.add('drag-over');
+            }
+        }
+
+    function dragLeave(ev) {
+            const zone = ev.target.closest('.drop-zone');
+            if(zone) {
+                zone.classList.remove('drag-over');
+            }
+        }
+
+        function drop(ev) {
+        ev.preventDefault();
+        
+        const zone = ev.target.closest('.drop-zone') || ev.target.closest('#pool') || ev.target.closest('#diagram-pool') || ev.target.closest('#diagram-pool-4');
+        if(zone && zone.classList) {
+            zone.classList.remove('drag-over');
+        }
+
+        const data = ev.dataTransfer.getData("text");
+        const element = document.getElementById(data);
+        
+        if (!element) return;
+
+        const elType = element.dataset.type;
+        
+        // Validation routing: prevent mixing Venn and multiple Diagram labels
+        let validZone = false;
+        if (elType === 'venn' && (zone.id === 'pool' || (zone.classList.contains('drop-zone') && !zone.classList.contains('diagram-zone') && !zone.classList.contains('diagram-zone-4')))) {
+            validZone = true;
+        } else if (elType === 'diagram' && (zone.id === 'diagram-pool' || zone.classList.contains('diagram-zone'))) {
+            validZone = true;
+        } else if (elType === 'diagram4' && (zone.id === 'diagram-pool-4' || zone.classList.contains('diagram-zone-4'))) {
+            validZone = true;
+        }
+
+        if (!validZone) return; // Deny drop if dragging to wrong section
+
+        // Reset validation styling (for Venn items)
+        if (elType === 'venn') {
+            element.classList.remove("border-green-500", "border-red-500", "bg-green-50", "bg-red-50", "text-green-800", "text-red-800");
+            element.classList.add("border-slate-300", "bg-white", "text-slate-800");
+        }
+
+        // Append logic depending on zone
+        if (zone.id === 'pool' || zone.id === 'diagram-pool' || zone.id === 'diagram-pool-4') {
+            zone.appendChild(element);
+            if (elType !== 'venn') {
+                element.classList.remove('w-full', 'h-full'); // Remove absolute scaling when returned to pool
+            }
+        } else if (zone.classList.contains('diagram-zone') || zone.classList.contains('diagram-zone-4')) {
+            // If dropping into a diagram zone, ensure it only holds one item
+            if (zone.children.length > 0) {
+                // Send existing child back to correct pool
+                const existingChild = zone.children[0];
+                existingChild.classList.remove('w-full', 'h-full');
+                const returnPool = existingChild.dataset.type === 'diagram' ? document.getElementById('diagram-pool') : document.getElementById('diagram-pool-4');
+                returnPool.appendChild(existingChild);
+            }
+            element.classList.add('w-full', 'h-full'); // Make the label stretch to fit the absolute drop zone bounds
+            zone.appendChild(element);
+        } else {
+            // Standard Venn diagram zone
+            const itemsContainer = zone.querySelector('.drop-zone-items');
+            if(itemsContainer) itemsContainer.appendChild(element);
+        }
+    }
+
+    function resetVenn() {
+        initVenn();
+    }
+
+    function resetDiagram() {
+        initDiagram();
+    }
+
+    // --- SUBMISSION LOGIC ---
+    function submitAssignment() {
+        const studentName = document.getElementById('studentName').value.trim();
+        if (!studentName) {
+            showModal("Name Required", "Please enter your name at the top before submitting.");
+            return;
+        }
+
+        const soaVal = document.getElementById('select-soa').value;
+        const sraVal = document.getElementById('select-sra').value;
+        const potentialSign = document.getElementById('calc-sign').value;
+        const potentialValue = document.getElementById('calc-value').value;
+
+        if (!soaVal || !sraVal) {
+            showModal("Incomplete Part 2", "Please answer both questions in Part 2 before submitting.");
+            return;
+        }
+
+        if (!potentialSign || !potentialValue) {
+            showModal("Incomplete Part 3", "Please complete the cell potential calculation in Part 3 before submitting.");
+            return;
+        }
+
+        // Part 4 Checks
+        const p4_soa = document.getElementById('select-soa-4').value;
+        const p4_pred_sra = document.getElementById('select-predicted-sra').value;
+        const p4_act_sra = document.getElementById('select-actual-sra').value;
+        const p4_calc_sign = document.getElementById('calc4-sign').value;
+        const p4_calc_val = document.getElementById('calc4-value').value;
+
+        if (!p4_soa || !p4_pred_sra || !p4_act_sra || !p4_calc_sign || !p4_calc_val) {
+            showModal("Incomplete Part 4", "Please complete all questions and calculations in Part 4 before submitting.");
+            return;
+        }
+
+        // Gather Venn Data
+        const vennResults = { voltaic: [], both: [], electrolytic: [], unplaced: [] };
+        document.querySelectorAll('.drag-item[data-type="venn"]').forEach(item => {
+            const parentZone = item.closest('.drop-zone');
+            if (parentZone) {
+                vennResults[parentZone.id].push(item.textContent);
+            } else {
+                vennResults.unplaced.push(item.textContent);
+            }
+        });
+
+        // Gather Diagram Data
+        const diagramResults = {};
+        const diagramZones = ['dz_eflow', 'dz_anode', 'dz_cathode', 'dz_anion', 'dz_arrow1', 'dz_arrow2', 'dz_cation'];
+        diagramZones.forEach(id => {
+            const zone = document.getElementById(id);
+            if (zone && zone.children.length > 0) {
+                diagramResults[id] = zone.children[0].textContent;
+            } else {
+                diagramResults[id] = "Blank";
+            }
+        });
+
+        // Gather Diagram 4 Data
+        const diagramZones4 = ['dz4_eflow_left', 'dz4_eflow_right', 'dz4_anode', 'dz4_cathode', 'dz4_gas_left', 'dz4_gas_right', 'dz4_anion', 'dz4_cation'];
+        const diagResults4 = {};
+        diagramZones4.forEach(id => {
+            const zone = document.getElementById(id);
+            if (zone && zone.children.length > 0) {
+                diagResults4[id] = zone.children[0].textContent;
+            } else {
+                diagResults4[id] = "Blank";
+            }
+        });
+
+        // Prepare Payload
+        const payload = {
+            name: studentName,
+            timestamp: new Date().toLocaleString(),
+            soa_answer: soaVal,
+            sra_answer: sraVal,
+            venn_voltaic: vennResults.voltaic.join(" | "),
+            venn_both: vennResults.both.join(" | "),
+            venn_electrolytic: vennResults.electrolytic.join(" | "),
+            venn_unplaced: vennResults.unplaced.join(" | "),
+            
+            // Diagram 3 labels
+            diag_eflow: diagramResults.dz_eflow,
+            diag_anode: diagramResults.dz_anode,
+            diag_cathode: diagramResults.dz_cathode,
+            diag_anion: diagramResults.dz_anion,
+            diag_arrow1: diagramResults.dz_arrow1,
+            diag_arrow2: diagramResults.dz_arrow2,
+            diag_cation: diagramResults.dz_cation,
+            
+            // Calculated Potential
+            calc_sign: potentialSign,
+            calc_value: potentialValue,
+            
+            // Part 4 Data
+            p4_soa: p4_soa,
+            p4_pred_sra: p4_pred_sra,
+            p4_act_sra: p4_act_sra,
+            p4_calc_sign: p4_calc_sign,
+            p4_calc_val: p4_calc_val,
+            p4_dz_eflow_l: diagResults4.dz4_eflow_left,
+            p4_dz_eflow_r: diagResults4.dz4_eflow_right,
+            p4_dz_anode: diagResults4.dz4_anode,
+            p4_dz_cathode: diagResults4.dz4_cathode,
+            p4_dz_gas_l: diagResults4.dz4_gas_left,
+            p4_dz_gas_r: diagResults4.dz4_gas_right,
+            p4_dz_anion: diagResults4.dz4_anion,
+            p4_dz_cation: diagResults4.dz4_cation
+        };
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = "Submitting...";
+
+        // --- GOOGLE APPS SCRIPT URL ---
+        // TEACHERS: Replace the string below with your deployed Web App URL
+        const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwtBgwjoQbh3yktqeKGtt8yHkAQDZigGeMR1EKmb1lYyvO55VZWk0u99JbOi5PiIR8HXA/exec";
+
+        // Send via URLSearchParams to avoid CORS preflight issues with Google Scripts
+        const formData = new URLSearchParams();
+        for (const key in payload) {
+            formData.append(key, payload[key]);
+        }
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            btn.textContent = "Assignment Submitted!";
+            btn.classList.replace('bg-green-600', 'bg-slate-600');
+            btn.classList.replace('hover:bg-green-700', 'hover:bg-slate-700');
+            showModal("Success!", "Your assignment has been submitted to your teacher.");
+        })
+        .catch(error => {
+            console.error('Submission Error:', error);
+            showModal("Submission Error", "There was an issue submitting your assignment. (Note: The teacher needs to insert their Google Script URL in the code).");
+            btn.disabled = false;
+            btn.textContent = "Try Again";
+        });
+    }
+
+    // Initialize on load
+    window.onload = () => {
+        initVenn();
+        initDiagram();
+        initDiagram4();
+    };
+</script>
+</body>
+</html>
